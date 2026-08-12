@@ -18,10 +18,9 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy kode aplikasi
+# Copy kode aplikasi & entrypoint script
 COPY app.py .
+COPY entrypoint.sh .
+RUN chmod +x entrypoint.sh
 
-# Script startup yang bind ke $PORT, 5000, dan 8080 secara bersamaan
-RUN printf '#!/bin/sh\nPORT_VAL="${PORT:-5000}"\nexec gunicorn --bind 0.0.0.0:${PORT_VAL} --bind 0.0.0.0:5000 --bind 0.0.0.0:8080 --timeout 120 --workers 1 app:app\n' > /app/start.sh && chmod +x /app/start.sh
-
-CMD ["/app/start.sh"]
+CMD ["/app/entrypoint.sh"]
