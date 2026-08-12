@@ -3,20 +3,20 @@ import base64, re, gc, os, sys
 from io import BytesIO
 from PIL import Image, ImageFilter, ImageEnhance
 import pytesseract
+from waitress import serve
 
 app = Flask(__name__)
 
-# Force unbuffered output for live Railway logging
 sys.stdout.flush()
 
 # ================================================================
-# MESIN OCR KK MANDIRI - Tesseract OCR (Ringan & Cepat)
+# MESIN OCR KK MANDIRI - Tesseract OCR (Waitress WSGI Server)
 # 100% Private, tidak ada data dikirim ke pihak ketiga
 # ================================================================
 
 def preprocess_image(image_bytes):
     """Pra-proses gambar untuk meningkatkan akurasi OCR."""
-    img = Image.open(BytesIO(image_bytes)).convert('L')  # Grayscale
+    img = Image.open(BytesIO(image_bytes)).convert('L')
     img = img.resize((img.width * 2, img.height * 2), Image.LANCZOS)
     img = ImageEnhance.Contrast(img).enhance(2.0)
     img = img.filter(ImageFilter.SHARPEN)
@@ -124,7 +124,6 @@ def scan_kk():
         image_bytes = base64.b64decode(image_b64)
         img = preprocess_image(image_bytes)
 
-        # Coba tesseract ind+eng, jika gagal fallback ke eng
         try:
             raw_text = pytesseract.image_to_string(img, lang='ind+eng', config='--psm 6')
         except Exception:
@@ -150,5 +149,5 @@ def scan_kk():
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
-    print(f"🚀 Starting Flask Server on port {port}...", flush=True)
-    app.run(host='0.0.0.0', port=port, debug=False)
+    print(f"🚀 Starting Waitress Production WSGI Server on 0.0.0.0:{port}...", flush=True)
+    serve(app, host='0.0.0.0', port=port, threads=4)
