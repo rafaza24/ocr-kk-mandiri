@@ -21,5 +21,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy kode aplikasi
 COPY app.py .
 
-# Jalankan gunicorn yang membaca $PORT dinamis dari Railway
-CMD sh -c "gunicorn --bind 0.0.0.0:${PORT:-5000} --timeout 120 --workers 2 app:app"
+# Run python app.py which binds to host 0.0.0.0 and dynamic $PORT
+CMD ["python", "app.py"]
