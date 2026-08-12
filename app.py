@@ -1,10 +1,13 @@
 from flask import Flask, request, jsonify
-import base64, re, gc, os
+import base64, re, gc, os, sys
 from io import BytesIO
 from PIL import Image, ImageFilter, ImageEnhance
 import pytesseract
 
 app = Flask(__name__)
+
+# Force unbuffered output for live Railway logging
+sys.stdout.flush()
 
 # ================================================================
 # MESIN OCR KK MANDIRI - Tesseract OCR (Ringan & Cepat)
@@ -14,11 +17,8 @@ app = Flask(__name__)
 def preprocess_image(image_bytes):
     """Pra-proses gambar untuk meningkatkan akurasi OCR."""
     img = Image.open(BytesIO(image_bytes)).convert('L')  # Grayscale
-    # Perbesar 2x agar teks lebih mudah dibaca
     img = img.resize((img.width * 2, img.height * 2), Image.LANCZOS)
-    # Tingkatkan kontras
     img = ImageEnhance.Contrast(img).enhance(2.0)
-    # Tajamkan gambar
     img = img.filter(ImageFilter.SHARPEN)
     return img
 
@@ -118,29 +118,22 @@ def scan_kk():
         if not image_b64:
             return jsonify({"success": False, "message": "Parameter 'base64Data' wajib diisi"}), 400
 
-        # Hapus header data URI jika ada
         if 'base64,' in image_b64:
             image_b64 = image_b64.split('base64,')[1]
 
-        # Decode gambar ke memori (tidak disimpan ke disk)
         image_bytes = base64.b64decode(image_b64)
-
-        # Pra-proses gambar untuk akurasi lebih baik
         img = preprocess_image(image_bytes)
 
-        # Jalankan OCR dengan Tesseract (Bahasa Indonesia + Inggris)
-        raw_text = pytesseract.image_to_string(
-            img,
-            lang='ind+eng',
-            config='--psm 6 --oem 3'
-        )
+        # Coba tesseract ind+eng, jika gagal fallback ke eng
+        try:
+            raw_text = pytesseract.image_to_string(img, lang='ind+eng', config='--psm 6')
+        except Exception:
+            raw_text = pytesseract.image_to_string(img, lang='eng', config='--psm 6')
 
-        # Bersihkan dari memori
         img.close()
         del img, image_bytes, data, image_b64
         gc.collect()
 
-        # Urai teks menjadi data KK terstruktur
         kk_data = parse_kk_from_text(raw_text)
 
         return jsonify({
@@ -157,4 +150,5 @@ def scan_kk():
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
+    print(f"🚀 Starting Flask Server on port {port}...", flush=True)
     app.run(host='0.0.0.0', port=port, debug=False)
