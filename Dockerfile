@@ -18,9 +18,8 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy kode aplikasi & entrypoint script
+# Copy kode aplikasi
 COPY app.py .
-COPY entrypoint.sh .
-RUN chmod +x entrypoint.sh
 
-CMD ["/app/entrypoint.sh"]
+# Run app directly on 0.0.0.0:$PORT
+CMD ["python", "app.py"]
