@@ -21,5 +21,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy kode aplikasi
 COPY app.py .
 
-# Run app directly on 0.0.0.0:$PORT
-CMD ["python", "app.py"]
+EXPOSE 5000
+
+# Jalankan gunicorn yang bind ke port 5000 dan 8080 sekaligus
+CMD ["gunicorn", "-b", "0.0.0.0:5000", "-b", "0.0.0.0:8080", "--workers", "1", "--timeout", "120", "app:app"]
