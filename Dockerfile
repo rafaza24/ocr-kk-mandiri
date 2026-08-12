@@ -21,5 +21,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy kode aplikasi
 COPY app.py .
 
-# Run python app.py which binds to host 0.0.0.0 and dynamic $PORT
-CMD ["python", "app.py"]
+# Script startup yang bind ke $PORT, 5000, dan 8080 secara bersamaan
+RUN printf '#!/bin/sh\nPORT_VAL="${PORT:-5000}"\nexec gunicorn --bind 0.0.0.0:${PORT_VAL} --bind 0.0.0.0:5000 --bind 0.0.0.0:8080 --timeout 120 --workers 1 app:app\n' > /app/start.sh && chmod +x /app/start.sh
+
+CMD ["/app/start.sh"]
