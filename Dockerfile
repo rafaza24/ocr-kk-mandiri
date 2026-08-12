@@ -21,9 +21,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy kode aplikasi
 COPY app.py .
 
-# Tetapkan PORT 5000 secara eksplisit untuk Railway proxy
-ENV PORT=5000
-EXPOSE 5000
-
-# Jalankan gunicorn di port 5000
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--timeout", "120", "--workers", "2", "app:app"]
+# Jalankan gunicorn yang membaca $PORT dinamis dari Railway
+CMD sh -c "gunicorn --bind 0.0.0.0:${PORT:-5000} --timeout 120 --workers 2 app:app"
